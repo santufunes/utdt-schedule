@@ -324,309 +324,315 @@ export default function UtdtDynamicScheduleSolver() {
   }
 
   return (
-    <div className="min-h-screen bg-[#070711] text-white px-4 py-6 md:px-8">
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-6 rounded-3xl border border-white/10 bg-white/[0.03] p-5 shadow-2xl shadow-black/30">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <div className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-white/45">UTDT · Schedule solver</div>
-              <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Calendario dinámico validado globalmente</h1>
-              <p className="mt-2 max-w-3xl text-sm text-white/65">
-                Este componente no valida por partes: calcula únicamente combinaciones completas que cumplen con asistir a los 2 teóricos de MYB, DE y FP, más 1 práctico semanal por cada una, sin superposiciones con las materias fijas.
-              </p>
+    <div className="min-h-screen bg-[#050508] text-white">
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#050508]/80 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 md:px-8">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 font-bold text-white shadow-lg shadow-emerald-500/20">
+              U
             </div>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-                <div className="text-xs uppercase tracking-[0.2em] text-white/40">Horarios válidos</div>
-                <div className="mt-1 text-2xl font-semibold">{stats.fullSchedules}</div>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-                <div className="text-xs uppercase tracking-[0.2em] text-white/40">Mix teóricos válidos</div>
-                <div className="mt-1 text-2xl font-semibold">{stats.theoryMixes}</div>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-                <div className="text-xs uppercase tracking-[0.2em] text-white/40">Espacio bruto</div>
-                <div className="mt-1 text-2xl font-semibold">{stats.rawPossibilities}</div>
-              </div>
+            <div>
+              <div className="text-sm font-semibold tracking-tight">UTDT Schedule</div>
+              <div className="text-[11px] text-white/40">Solver de horarios</div>
             </div>
           </div>
-
-          <div className="mt-4 flex flex-wrap gap-2 text-xs text-white/55">
-            <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-emerald-300">Solo se muestran opciones que llevan a un horario completo factible</span>
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Se corrige el bug de superposición dentro de la misma materia</span>
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Se reemplaza la lógica local por un solver global</span>
+          <div className="flex items-center gap-2">
+            <div className="hidden items-center gap-4 text-sm text-white/60 sm:flex">
+              <span className="flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+                {stats.fullSchedules} combinaciones
+              </span>
+            </div>
           </div>
         </div>
+      </header>
 
-        <div className="grid gap-4 xl:grid-cols-[420px,1fr]">
+      <main className="px-4 py-8 md:px-8">
+        <div className="mx-auto max-w-7xl">
+          {/* Hero Section */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
+              Armá tu horario
+            </h1>
+            <p className="mt-3 max-w-2xl text-base leading-relaxed text-white/50">
+              Seleccioná tus preferencias y explorá todas las combinaciones válidas. 
+              Solo se muestran opciones que llevan a horarios completos sin superposiciones.
+            </p>
+          </div>
+
+          {/* Stats Row */}
+          <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="group rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 transition-colors hover:border-white/10 hover:bg-white/[0.04]">
+              <div className="text-[11px] font-medium uppercase tracking-widest text-white/35">Válidos</div>
+              <div className="mt-2 text-3xl font-semibold tabular-nums">{stats.fullSchedules}</div>
+            </div>
+            <div className="group rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 transition-colors hover:border-white/10 hover:bg-white/[0.04]">
+              <div className="text-[11px] font-medium uppercase tracking-widest text-white/35">Mix teóricos</div>
+              <div className="mt-2 text-3xl font-semibold tabular-nums">{stats.theoryMixes}</div>
+            </div>
+            <div className="group rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 transition-colors hover:border-white/10 hover:bg-white/[0.04]">
+              <div className="text-[11px] font-medium uppercase tracking-widest text-white/35">Filtrados</div>
+              <div className="mt-2 text-3xl font-semibold tabular-nums text-emerald-400">{filteredSchedules.length}</div>
+            </div>
+            <div className="group rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 transition-colors hover:border-white/10 hover:bg-white/[0.04]">
+              <div className="text-[11px] font-medium uppercase tracking-widest text-white/35">Mostrando</div>
+              <div className="mt-2 text-3xl font-semibold tabular-nums">{filteredSchedules.length ? currentIndex + 1 : 0}</div>
+            </div>
+          </div>
+
+        <div className="grid gap-6 xl:grid-cols-[400px,1fr]">
+          {/* Sidebar - Course Selection */}
           <div className="space-y-4">
+            {/* Quick Actions */}
+            <div className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+              <span className="text-sm text-white/60">Filtros activos</span>
+              <button
+                onClick={clearAllLocks}
+                className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/70 transition-all hover:border-white/20 hover:bg-white/10 hover:text-white"
+              >
+                Limpiar todo
+              </button>
+            </div>
             {GROUPS.map((group) => {
               const meta = COURSE_META[group.course];
               const presetState = getTheoryPresetState(group, locks);
               return (
                 <div
                   key={group.course}
-                  className="rounded-3xl border p-4"
-                  style={{ backgroundColor: `${meta.bg}`, borderColor: `${meta.accent}33` }}
+                  className="overflow-hidden rounded-2xl border transition-all hover:border-opacity-60"
+                  style={{ backgroundColor: meta.bg, borderColor: `${meta.accent}40` }}
                 >
-                  <div className="mb-4 flex items-center justify-between gap-3">
-                    <div>
-                      <div className="text-xs uppercase tracking-[0.22em] text-white/40">{group.course}</div>
-                      <h2 className="text-lg font-semibold" style={{ color: meta.text }}>{group.title}</h2>
+                  {/* Course Header */}
+                  <div className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: `${meta.accent}20` }}>
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className="flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold"
+                        style={{ backgroundColor: `${meta.accent}20`, color: meta.accent }}
+                      >
+                        {group.course.slice(0, 2)}
+                      </div>
+                      <div>
+                        <h2 className="text-sm font-semibold" style={{ color: meta.text }}>{group.title}</h2>
+                        <div className="text-[11px] text-white/40">{group.course}</div>
+                      </div>
                     </div>
                     <button
                       onClick={() => clearCourseLocks(group.course)}
-                      className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/65 transition hover:bg-white/5"
+                      className="rounded-lg px-2.5 py-1 text-[11px] text-white/50 transition-colors hover:bg-white/5 hover:text-white/70"
                     >
-                      Limpiar curso
+                      Limpiar
                     </button>
                   </div>
 
-                  <div className="mb-3 rounded-2xl border border-white/8 bg-black/10 p-3">
-                    <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/45">Preset teóricos</div>
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        onClick={() => setTheoryPreset(group, "S1")}
-                        className="rounded-full px-3 py-1.5 text-xs transition"
-                        style={presetButtonStyle(presetState === "S1", meta.accent)}
-                      >
-                        S1 completo
-                      </button>
-                      <button
-                        onClick={() => setTheoryPreset(group, "S2")}
-                        className="rounded-full px-3 py-1.5 text-xs transition"
-                        style={presetButtonStyle(presetState === "S2", meta.accent)}
-                      >
-                        S2 completo
-                      </button>
-                      <button
-                        onClick={() => setTheoryPreset(group, "FREE")}
-                        className="rounded-full px-3 py-1.5 text-xs transition"
-                        style={presetButtonStyle(presetState === "FREE", meta.accent)}
-                      >
-                        Liberar teóricos
-                      </button>
+                  <div className="p-4">
+                    {/* Preset Buttons */}
+                    <div className="mb-4">
+                      <div className="mb-2 text-[11px] font-medium uppercase tracking-wider text-white/30">Preset teóricos</div>
+                      <div className="flex gap-2">
+                        {[
+                          { key: "S1", label: "S1" },
+                          { key: "S2", label: "S2" },
+                          { key: "FREE", label: "Libre" },
+                        ].map((preset) => (
+                          <button
+                            key={preset.key}
+                            onClick={() => setTheoryPreset(group, preset.key)}
+                            className="flex-1 rounded-lg py-2 text-xs font-medium transition-all"
+                            style={presetButtonStyle(presetState === preset.key, meta.accent)}
+                          >
+                            {preset.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                    <div className="mt-2 text-xs text-white/45">
-                      El selector fino sigue siendo por día. Estos presets fijan ambos teóricos del curso juntos para que puedas clavar S1 o S2 de una sola vez.
-                    </div>
-                  </div>
 
-                  <div className="space-y-3">
-                    {group.keys.map((key) => {
-                      const dimension = DIMENSION_MAP[key];
-                      const lockedValue = locks[key];
-                      return (
-                        <div key={key} className="rounded-2xl border border-white/8 bg-black/10 p-3">
-                          <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/45">{dimension.title}</div>
-                          <div className="grid gap-2">
-                            {dimension.options.map((option, optionIndex) => {
-                              const count = optionCount(key, optionIndex);
-                              const isDisabled = count === 0;
-                              const isActive = lockedValue === optionIndex;
-                              return (
-                                <button
-                                  key={option.label}
-                                  disabled={isDisabled}
-                                  onClick={() => toggleLock(key, optionIndex)}
-                                  className="rounded-2xl px-3 py-3 text-left transition"
-                                  style={chipStyle(isActive, isDisabled, meta.accent)}
-                                >
-                                  <div className="flex items-start justify-between gap-3">
-                                    <div>
-                                      <div className="text-sm font-medium" style={{ color: isDisabled ? "rgba(255,255,255,0.28)" : meta.text }}>
+                    {/* Time Slot Options */}
+                    <div className="space-y-3">
+                      {group.keys.map((key) => {
+                        const dimension = DIMENSION_MAP[key];
+                        const lockedValue = locks[key];
+                        return (
+                          <div key={key}>
+                            <div className="mb-2 text-[11px] font-medium uppercase tracking-wider text-white/30">{dimension.title}</div>
+                            <div className="space-y-1.5">
+                              {dimension.options.map((option, optionIndex) => {
+                                const count = optionCount(key, optionIndex);
+                                const isDisabled = count === 0;
+                                const isActive = lockedValue === optionIndex;
+                                return (
+                                  <button
+                                    key={option.label}
+                                    disabled={isDisabled}
+                                    onClick={() => toggleLock(key, optionIndex)}
+                                    className="w-full rounded-xl px-3 py-2.5 text-left transition-all"
+                                    style={chipStyle(isActive, isDisabled, meta.accent)}
+                                  >
+                                    <div className="flex items-center justify-between gap-3">
+                                      <span 
+                                        className="text-sm"
+                                        style={{ color: isDisabled ? "rgba(255,255,255,0.25)" : meta.text }}
+                                      >
                                         {option.label}
-                                      </div>
-                                      <div className="mt-1 text-xs text-white/45">
-                                        {isActive ? "Filtro activo" : "Click para fijar esta opción"}
-                                      </div>
+                                      </span>
+                                      <span 
+                                        className="rounded-md px-2 py-0.5 text-[11px] font-medium tabular-nums"
+                                        style={{ 
+                                          backgroundColor: isActive ? `${meta.accent}30` : "rgba(255,255,255,0.06)",
+                                          color: isActive ? meta.accent : "rgba(255,255,255,0.5)"
+                                        }}
+                                      >
+                                        {count}
+                                      </span>
                                     </div>
-                                    <div className="shrink-0 rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-xs text-white/70">
-                                      {count}
-                                    </div>
-                                  </div>
-                                </button>
-                              );
-                            })}
+                                  </button>
+                                );
+                              })}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               );
             })}
 
-            <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-4">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-white/40">Exploración</div>
-                  <div className="text-lg font-semibold">Horarios restantes</div>
-                </div>
-                <button
-                  onClick={clearAllLocks}
-                  className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/65 transition hover:bg-white/5"
-                >
-                  Limpiar todo
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
-                <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
-                  <div className="text-xs uppercase tracking-[0.2em] text-white/40">Quedan</div>
-                  <div className="mt-1 text-2xl font-semibold">{filteredSchedules.length}</div>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
-                  <div className="text-xs uppercase tracking-[0.2em] text-white/40">Mostrando</div>
-                  <div className="mt-1 text-2xl font-semibold">{filteredSchedules.length ? currentIndex + 1 : 0}</div>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
-                  <div className="text-xs uppercase tracking-[0.2em] text-white/40">Fijos</div>
-                  <div className="mt-1 text-2xl font-semibold">{FIXED_BLOCKS.length}</div>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
-                  <div className="text-xs uppercase tracking-[0.2em] text-white/40">Dinámicos</div>
-                  <div className="mt-1 text-2xl font-semibold">9</div>
-                </div>
-              </div>
-
-              <div className="mt-4 flex gap-2">
+            {/* Navigation */}
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+              <div className="mb-3 text-[11px] font-medium uppercase tracking-wider text-white/30">Navegación</div>
+              <div className="flex gap-2">
                 <button
                   onClick={previousSchedule}
                   disabled={filteredSchedules.length <= 1}
-                  className="rounded-2xl border border-white/10 px-4 py-2 text-sm text-white/75 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex-1 rounded-xl border border-white/[0.08] bg-white/[0.02] py-3 text-sm font-medium text-white/70 transition-all hover:border-white/15 hover:bg-white/[0.05] hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
                 >
-                  ← Anterior
+                  Anterior
                 </button>
                 <button
                   onClick={nextSchedule}
                   disabled={filteredSchedules.length <= 1}
-                  className="rounded-2xl border border-white/10 px-4 py-2 text-sm text-white/75 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex-1 rounded-xl border border-emerald-500/30 bg-emerald-500/10 py-3 text-sm font-medium text-emerald-400 transition-all hover:border-emerald-500/50 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-30"
                 >
-                  Siguiente →
+                  Siguiente
                 </button>
               </div>
             </div>
           </div>
 
+          {/* Calendar Section */}
           <div className="space-y-4">
-            <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-4">
-              <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-white/40">Horario activo</div>
-                  <div className="text-lg font-semibold">
-                    {activeSchedule ? `Combinación #${activeSchedule.id}` : "No hay horarios con esos filtros"}
+            {/* Schedule Header */}
+            <div className="flex flex-col gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400">
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold">
+                      {activeSchedule ? `Combinación #${activeSchedule.id}` : "Sin resultados"}
+                    </h2>
+                    <p className="text-sm text-white/40">
+                      {activeSchedule ? `${filteredSchedules.length} opciones disponibles` : "Ajustá los filtros para ver opciones"}
+                    </p>
                   </div>
                 </div>
-                {activeSchedule && (
-                  <div className="text-sm text-white/55">
-                    {GROUPS.map((group) => (
-                      <span key={group.course} className="mr-4 inline-block">
-                        <span className="font-semibold" style={{ color: COURSE_META[group.course].accent }}>{group.course}</span>
-                        {": "}
-                        {dimensionSummary(activeSchedule, group.keys[0]).split("·")[0].trim()}
-                        {" / "}
-                        {dimensionSummary(activeSchedule, group.keys[1]).split("·")[0].trim()}
-                        {" / PRA "}
-                        {dimensionSummary(activeSchedule, group.keys[2]).split("·")[0].trim()}
-                      </span>
-                    ))}
-                  </div>
-                )}
               </div>
-
               {activeSchedule && (
-                <div className="mb-4 grid gap-3 md:grid-cols-3">
-                  {GROUPS.map((group) => {
-                    const meta = COURSE_META[group.course];
-                    return (
-                      <div key={group.course} className="rounded-2xl border p-3" style={{ backgroundColor: `${meta.bg}`, borderColor: `${meta.accent}33` }}>
-                        <div className="mb-2 text-sm font-semibold" style={{ color: meta.text }}>{group.title}</div>
-                        <div className="space-y-1 text-xs text-white/70">
-                          <div>{dimensionSummary(activeSchedule, group.keys[0])}</div>
-                          <div>{dimensionSummary(activeSchedule, group.keys[1])}</div>
-                          <div>{dimensionSummary(activeSchedule, group.keys[2])}</div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="flex flex-wrap gap-2">
+                  {GROUPS.map((group) => (
+                    <div 
+                      key={group.course} 
+                      className="rounded-lg px-3 py-1.5 text-xs font-medium"
+                      style={{ backgroundColor: `${COURSE_META[group.course].accent}15`, color: COURSE_META[group.course].accent }}
+                    >
+                      {group.course}: {dimensionSummary(activeSchedule, group.keys[0]).split("·")[0].trim()}
+                    </div>
+                  ))}
                 </div>
               )}
+            </div>
 
-              <div className="overflow-hidden rounded-3xl border border-white/10 bg-[#0a0a13]">
-                <div className="grid" style={{ gridTemplateColumns: "56px repeat(5, minmax(0, 1fr))" }}>
-                  <div className="border-b border-white/10 bg-[#0d0d18]" />
-                  {DAY_SHORT.map((day, dayIndex) => (
-                    <div key={day} className="border-b border-l border-white/10 bg-[#0d0d18] px-2 py-3 text-center">
-                      <div className="text-sm font-semibold tracking-wide">{day}</div>
-                      <div className="mt-0.5 text-[11px] text-white/35">{DAY_LONG[dayIndex]}</div>
-                    </div>
-                  ))}
-
-                  <div>
-                    {hours.map((hour) => (
-                      <div key={hour} className="flex items-start justify-center border-b border-white/5 pt-1" style={{ height: HOUR_HEIGHT }}>
-                        <span className="text-[11px] text-white/28">{`${hour}:00`}</span>
-                      </div>
-                    ))}
+            {/* Calendar Grid */}
+            <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#08080d]">
+              <div className="grid" style={{ gridTemplateColumns: "52px repeat(5, minmax(0, 1fr))" }}>
+                {/* Header Row */}
+                <div className="border-b border-white/[0.06] bg-white/[0.02]" />
+                {DAY_SHORT.map((day, dayIndex) => (
+                  <div key={day} className="border-b border-l border-white/[0.06] bg-white/[0.02] px-2 py-3 text-center">
+                    <div className="text-xs font-semibold tracking-wide">{day}</div>
+                    <div className="mt-0.5 text-[10px] text-white/30">{DAY_LONG[dayIndex]}</div>
                   </div>
+                ))}
 
-                  {DAY_SHORT.map((_, dayIndex) => (
-                    <div key={dayIndex} className="relative border-l border-white/10">
-                      {hours.map((hour) => (
-                        <div key={hour} className="border-b border-white/5" style={{ height: HOUR_HEIGHT }}>
-                          <div className="mt-[36px] border-b border-dashed border-white/[0.035]" />
-                        </div>
-                      ))}
-
-                      {activeSchedule?.blocks
-                        .filter((block) => block.day === dayIndex)
-                        .map((block, index) => {
-                          const meta = COURSE_META[block.course];
-                          const top = minutesToTop(toMinutes(block.start));
-                          const height = ((toMinutes(block.end) - toMinutes(block.start)) / 60) * HOUR_HEIGHT;
-
-                          return (
-                            <div
-                              key={`${block.course}-${block.kind}-${block.day}-${block.start}-${index}`}
-                              className="absolute left-1 right-1 rounded-xl border px-3 py-2 shadow-lg shadow-black/30"
-                              style={{
-                                top: top + 2,
-                                height: height - 4,
-                                backgroundColor: `${meta.bg}`,
-                                borderColor: `${meta.accent}55`,
-                                borderLeft: `4px solid ${meta.accent}`,
-                              }}
-                            >
-                              <div className="flex items-start justify-between gap-2">
-                                <div>
-                                  <div className="text-sm font-semibold" style={{ color: meta.text }}>
-                                    {block.course}
-                                  </div>
-                                  <div className="text-[11px] text-white/55">
-                                    {block.kind} · {block.section}
-                                    {block.fixed ? " · FIJO" : ""}
-                                  </div>
-                                </div>
-                                <div className="rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[10px] text-white/65">
-                                  {block.room}
-                                </div>
-                              </div>
-
-                              <div className="mt-3 text-xs text-white/70">{block.start}–{block.end}</div>
-                              <div className="mt-1 text-[11px] text-white/45">{COURSE_META[block.course].name}</div>
-                            </div>
-                          );
-                        })}
+                {/* Time Column */}
+                <div>
+                  {hours.map((hour) => (
+                    <div key={hour} className="flex items-start justify-center border-b border-white/[0.04] pt-1" style={{ height: HOUR_HEIGHT }}>
+                      <span className="text-[10px] font-medium text-white/20">{`${hour}:00`}</span>
                     </div>
                   ))}
                 </div>
+
+                {/* Day Columns */}
+                {DAY_SHORT.map((_, dayIndex) => (
+                  <div key={dayIndex} className="relative border-l border-white/[0.06]">
+                    {hours.map((hour) => (
+                      <div key={hour} className="border-b border-white/[0.04]" style={{ height: HOUR_HEIGHT }}>
+                        <div className="mt-[36px] border-b border-dashed border-white/[0.03]" />
+                      </div>
+                    ))}
+
+                    {activeSchedule?.blocks
+                      .filter((block) => block.day === dayIndex)
+                      .map((block, index) => {
+                        const meta = COURSE_META[block.course];
+                        const top = minutesToTop(toMinutes(block.start));
+                        const height = ((toMinutes(block.end) - toMinutes(block.start)) / 60) * HOUR_HEIGHT;
+
+                        return (
+                          <div
+                            key={`${block.course}-${block.kind}-${block.day}-${block.start}-${index}`}
+                            className="absolute left-0.5 right-0.5 overflow-hidden rounded-lg transition-all hover:z-10 hover:scale-[1.02]"
+                            style={{
+                              top: top + 1,
+                              height: height - 2,
+                              backgroundColor: meta.bg,
+                              borderLeft: `3px solid ${meta.accent}`,
+                              boxShadow: `0 2px 8px ${meta.accent}15`,
+                            }}
+                          >
+                            <div className="flex h-full flex-col justify-between p-2">
+                              <div>
+                                <div className="flex items-start justify-between gap-1">
+                                  <span className="text-xs font-bold" style={{ color: meta.accent }}>
+                                    {block.course}
+                                  </span>
+                                  <span className="rounded bg-black/30 px-1.5 py-0.5 text-[9px] font-medium text-white/60">
+                                    {block.room}
+                                  </span>
+                                </div>
+                                <div className="mt-0.5 text-[10px] text-white/50">
+                                  {block.kind} {block.fixed && <span className="text-white/30">FIJO</span>}
+                                </div>
+                              </div>
+                              <div className="text-[10px] font-medium text-white/40">
+                                {block.start}–{block.end}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
