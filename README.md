@@ -6,8 +6,8 @@ Web/mobile, React + Vite, pensado para deployar en Vercel. La versión del 1º s
 
 ## Cómo funciona
 
-El motor (`src/engine.ts`) enumera **todos los horarios completos válidos** (los 2.304
-que no tienen superposiciones, de 24.576 combinaciones brutas) y, ante cada selección
+El motor (`src/engine.ts`) enumera **todos los horarios completos válidos** (los 9.984
+que no tienen superposiciones, de 196.608 combinaciones brutas) y, ante cada selección
 parcial, calcula qué opciones siguen apareciendo en al menos un horario completo
 compatible. Todo lo que no puede formar parte de ningún horario válido se apaga solo —
 incluye propagación global, no sólo choques directos. Las opciones que aparecen en
@@ -31,8 +31,7 @@ npm run build      # build de producción (dist/)
 
 ## Actualizar datos
 
-Todo vive en `src/data.ts`. Cuando se publique la **Sección 2 de EMI**, agregá sus
-slots a los grupos `emi-teo-lu`, `emi-teo-ma` y `emi-pra` (mismo formato que los
-existentes) y ajustá los conteos esperados de `tests/engine.test.ts` si hace falta.
-La selección del usuario se guarda en `localStorage` y sobrevive redeploys (los ids
-de slots que dejen de existir se descartan solos).
+Todo vive en `src/data.ts`. Si cambia un horario, editá el slot correspondiente y
+ajustá los conteos esperados de `tests/engine.test.ts` (la derivación a mano está
+comentada arriba del test). La selección del usuario se guarda en `localStorage` y
+sobrevive redeploys (los ids de slots que dejen de existir se descartan solos).

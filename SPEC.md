@@ -33,14 +33,18 @@ Cursada: **03/08/2026 – 27/11/2026**. Materias: RIF (3110), EMI (4112), OI (41
 
 ### EMI 4112 — Economía Monetaria Internacional (Espino / Dallazuana)
 
+Según la página del curso en el campus (03/08/2026):
+
 | Tipo | Día | Hora | Aula | Sección |
 |---|---|---|---|---|
 | Teórica | Lu | 15:30–17:05 | SV202 | S1 |
+| Teórica | Lu | 17:15–18:50 | SV202 | S2 |
 | Teórica | Ma | 15:30–17:05 | SV201 | S1 |
+| Teórica | Ma | 17:15–18:50 | SV201 | S2 |
 | Práctica | Mi | 15:30–17:05 | SV105 | S1 |
+| Práctica | Mi | 17:15–18:50 | SV201 | S2 |
+| Práctica | Vi | 15:30–17:05 | A102 | S2 |
 | Práctica | Vi | 17:15–18:50 | A113 | S1 |
-
-**Pendiente**: la Sección 2 de EMI (teóricas y práctica) no figura en el material disponible. Cuando se publique, agregarla en `src/data.ts` (grupos `emi-teo-lu`, `emi-teo-ma`, `emi-pra`).
 
 ### OI 4117 — Organización Industrial (Tappatá / Devoto) — según mail de Devoto
 
@@ -84,8 +88,10 @@ Se eligen 2 de 3.
 
 ## Hechos derivados (verificados por `npm test`)
 
-- 31 slots en total; un horario completo tiene **14 clases** (3+3+3+3+2).
-- Espacio bruto: 16 (RIF) × 2 (EMI) × 16 (OI) × 16 (TEA) × 3 (HEA) = 24.576 combinaciones; **2.304 son válidas** (sin superposiciones).
-- Desde el arranque quedan **fijas**: EMI teórica Lu 15:30, EMI teórica Ma 15:30 (opción única) y TEA teórica Lu 13:45 S1 (la S2 de 15:30 choca con la única teórica de EMI del lunes).
-- Desde el arranque quedan **imposibles**: TEA teórica Lu S2 (15:30) y TEA práctica Lu S2 (13:45, choca con la teórica fija de TEA).
-- El jueves a la mañana RIF y OI compiten por los bloques 9:45 y 11:30: siempre van en bloques opuestos.
+- 35 slots en total; un horario completo tiene **14 clases** (3+3+3+3+2).
+- Espacio bruto: 16 (RIF) × 16 (EMI) × 16 (OI) × 16 (TEA) × 3 (HEA) = 196.608 combinaciones; **9.984 son válidas** (sin superposiciones).
+- Con las dos secciones de EMI publicadas, **ninguna opción es imposible ni queda fija de entrada**.
+- Acoplamientos principales:
+  - Jueves a la mañana RIF y OI compiten por 9:45 y 11:30: siempre van en bloques opuestos (ídem RIF martes vs práctica de OI de martes).
+  - EMI teórica S2 (Lu/Ma 17:15) pisa las teóricas de HEA: con HEA Lu+Ma elegidos, EMI queda forzada a S1 en ambas; con EMI Lu S2, HEA queda forzada a Ma+Ju y la teórica Ma S2 de EMI muere (dejaría a HEA sin 2 días).
+  - EMI teórica Lu S1 (15:30) choca con TEA teórica Lu S2; EMI práctica Mi choca con la práctica de TEA del mismo bloque (15:30 S1↔S2, 17:15 S2↔S1).

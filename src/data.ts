@@ -116,7 +116,6 @@ export const COURSES: Course[] = [
     name: 'Economía Monetaria Internacional',
     people: 'Espino (teóricas) · Dallazuana (prácticas)',
     color: '#f59e0b',
-    note: 'Sólo se conocen los horarios de la Sección 1. Cuando se publique la Sección 2, agregala en src/data.ts.',
     groups: [
       {
         id: 'emi-teo-lu',
@@ -124,6 +123,7 @@ export const COURSES: Course[] = [
         pick: 1,
         slots: [
           { id: 'emi-teo-lu-s1', day: 1, start: t(15, 30), end: t(17, 5), room: 'SV202', section: 1, kind: 'T' },
+          { id: 'emi-teo-lu-s2', day: 1, start: t(17, 15), end: t(18, 50), room: 'SV202', section: 2, kind: 'T' },
         ],
       },
       {
@@ -132,6 +132,7 @@ export const COURSES: Course[] = [
         pick: 1,
         slots: [
           { id: 'emi-teo-ma-s1', day: 2, start: t(15, 30), end: t(17, 5), room: 'SV201', section: 1, kind: 'T' },
+          { id: 'emi-teo-ma-s2', day: 2, start: t(17, 15), end: t(18, 50), room: 'SV201', section: 2, kind: 'T' },
         ],
       },
       {
@@ -140,6 +141,8 @@ export const COURSES: Course[] = [
         pick: 1,
         slots: [
           { id: 'emi-pra-mi-s1', day: 3, start: t(15, 30), end: t(17, 5), room: 'SV105', section: 1, kind: 'P' },
+          { id: 'emi-pra-mi-s2', day: 3, start: t(17, 15), end: t(18, 50), room: 'SV201', section: 2, kind: 'P' },
+          { id: 'emi-pra-vi-s2', day: 5, start: t(15, 30), end: t(17, 5), room: 'A102', section: 2, kind: 'P' },
           { id: 'emi-pra-vi-s1', day: 5, start: t(17, 15), end: t(18, 50), room: 'A113', section: 1, kind: 'P' },
         ],
       },
@@ -264,7 +267,7 @@ export const SLOT_COURSE = new Map(
 
 export const FOOTNOTES: string[] = [
   'Cursada del 03/08/2026 al 27/11/2026. En RIF, EMI, OI y TEA se cursan las dos teóricas semanales (una por día disponible, pudiendo mezclar secciones) y una sola clase práctica, cualquiera de las cuatro.',
-  'EMI: el material disponible sólo publica la Sección 1 (teóricas y práctica). Cuando salga la Sección 2, agregá sus horarios en src/data.ts y redeployá.',
+  'EMI: horarios de Sección 1 y Sección 2 según la página del curso en el campus (03/08/2026).',
   'RIF · práctica S1 de viernes: el campus dice 9:35–11:20 y la inscripción 9:45–11:20; se usa 9:45. No cambia ningún cruce posible.',
   'TEA · práctica S1 de miércoles: aula P102 según el campus (la inscripción decía P201).',
   'OI: horarios tomados del mail de Pilar Devoto, que corrige las aulas de los martes (A107 para S2 y M2 para S1).',

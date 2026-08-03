@@ -1,5 +1,17 @@
 // Chequeos independientes del motor contra conteos derivados a mano.
 // Correr con: npm test
+//
+// Derivación (con EMI Sección 1 y 2):
+//   Bloque RIF/OI: (R_ma, O_pra Ma opuesto) ×6 · (R_ju, O_ju opuestos) ×2
+//     · O_mi ×2 · R_pra ×4 = 96
+//   Bloque EMI/TEA/HEA (acoplados por Lu/Ma 17:15, Lu 15:30 y Mi 15:30/17:15):
+//     E_lu=S1,E_ma=S1 → HEA×3, T_lu=13:45 → 3×16 = 48
+//     E_lu=S1,E_ma=S2 → HEA={Lu,Ju}    → 1×16 = 16
+//     E_lu=S2,E_ma=S1 → HEA={Ma,Ju}    → 1×(16+24) = 40
+//     E_lu=S2,E_ma=S2 → HEA imposible  → 0
+//     (16 = combinaciones T_ju/T_pra/E_pra con T_lu=13:45; 24 con T_lu=15:30)
+//     Total bloque = 104
+//   Total = 96 × 104 = 9.984
 
 import { COURSES } from '../src/data'
 import { buildEngine, query, selectionMask, hasBit, matching } from '../src/engine'
@@ -23,54 +35,56 @@ const posOf = (id: string) => {
 }
 
 // 1. Estructura
-assert(engine.slots.length === 31, `31 slots en total (got ${engine.slots.length})`)
+assert(engine.slots.length === 35, `35 slots en total (got ${engine.slots.length})`)
 assert(engine.totalPicks === 14, `14 clases a elegir (got ${engine.totalPicks})`)
 
-// 2. Conteo total derivado a mano:
-//    RIF práctica libre (×4) · jueves RIF/OI teóricas en bloques opuestos (×2)
-//    · OI teórica miércoles libre (×2) · (RIF teo martes, OI práctica) (×6)
-//    · bloque TEA/EMI {T_ju, T_pra, E_pra} (×8) · HEA C(3,2) (×3) = 2304
+// 2. Conteo total
 const q0 = query(engine, 0n)
-assert(q0.count === 2304, `2304 horarios completos válidos (got ${q0.count})`)
+assert(q0.count === 9984, `9984 horarios completos válidos (got ${q0.count})`)
 
-// 3. Imposibles desde el arranque:
-//    TEA teórica Lu S2 choca con EMI teórica Lu (única opción de EMI ese día);
-//    en consecuencia TEA teórica Lu queda fija en S1 13:45 y la práctica Lu de
-//    TEA (13:45) también muere.
-const excluded = new Set(['tea-teo-lu-s2', 'tea-pra-lu-s2'])
-for (const [id, p] of engine.pos)
-  assert(
-    hasBit(q0.avail, p) === !excluded.has(id),
-    `${excluded.has(id) ? 'imposible' : 'disponible'} al inicio: ${id}`,
-  )
+// 3. Con EMI S2 publicada ya no hay slots imposibles ni forzados de entrada.
+for (const [id, p] of engine.pos) assert(hasBit(q0.avail, p), `disponible al inicio: ${id}`)
+for (const [id, p] of engine.pos) if (hasBit(q0.forced, p)) assert(false, `forzada de entrada (no debería): ${id}`)
+assert(q0.forced === 0n, 'ningún slot forzado de entrada')
 
-// 4. Forzadas desde el arranque: exactamente las dos teóricas de EMI (opción
-//    única) y la teórica de TEA del lunes S1.
-const forcedIds = new Set(['emi-teo-lu-s1', 'emi-teo-ma-s1', 'tea-teo-lu-s1'])
-for (const [id, p] of engine.pos)
-  assert(hasBit(q0.forced, p) === forcedIds.has(id), `forzada(${id}) === ${forcedIds.has(id)}`)
-
-// 5. Elegir RIF teórica Ma S2 (11:30) → OI práctica Ma S1 (11:30) muere,
-//    la otra opción de martes de RIF muere (grupo lleno), quedan 1152.
+// 4. Elegir RIF teórica Ma S2 (11:30) → OI práctica Ma S1 (11:30) muere,
+//    la otra opción de martes de RIF muere (grupo lleno), quedan 4992.
 const m1 = selectionMask(engine, ['rif-teo-ma-s2'])
 const q1 = query(engine, m1)
-assert(q1.count === 1152, `1152 tras RIF teórica Ma S2 (got ${q1.count})`)
+assert(q1.count === 4992, `4992 tras RIF teórica Ma S2 (got ${q1.count})`)
 assert(!hasBit(q1.avail, posOf('oi-pra-ma-s1')), 'OI práctica Ma 11:30 fuera')
 assert(!hasBit(q1.avail, posOf('rif-teo-ma-s1')), 'RIF teórica Ma S1 fuera (grupo lleno)')
 assert(hasBit(q1.avail, posOf('oi-pra-ma-s2')), 'OI práctica Ma 9:45 sigue disponible')
 
-// 6. + TEA práctica Ju S1 (15:30) → fuerza TEA teórica Ju S1 (13:45), quedan 288.
+// 5. + TEA práctica Ju S1 (15:30) → fuerza TEA teórica Ju S1 (13:45), quedan 1152.
 const m2 = selectionMask(engine, ['rif-teo-ma-s2', 'tea-pra-ju-s1'])
 const q2 = query(engine, m2)
-assert(q2.count === 288, `288 tras sumar TEA práctica Ju S1 (got ${q2.count})`)
+assert(q2.count === 1152, `1152 tras sumar TEA práctica Ju S1 (got ${q2.count})`)
 assert(hasBit(q2.forced, posOf('tea-teo-ju-s1')), 'TEA teórica Ju 13:45 forzada')
 assert(!hasBit(q2.avail, posOf('tea-teo-ju-s2')), 'TEA teórica Ju 15:30 fuera')
 
-// 7. HEA: con 2 días elegidos, el tercero muere.
+// 6. HEA Lu+Ma elegidos → tercer día fuera, y las teóricas de EMI quedan
+//    forzadas a S1 (las S2 de 17:15 chocan con HEA).
 const q3 = query(engine, selectionMask(engine, ['hea-teo-lu', 'hea-teo-ma']))
 assert(!hasBit(q3.avail, posOf('hea-teo-ju')), 'HEA tercer día fuera con 2 elegidos')
+assert(hasBit(q3.forced, posOf('emi-teo-lu-s1')), 'EMI teórica Lu forzada a S1')
+assert(hasBit(q3.forced, posOf('emi-teo-ma-s1')), 'EMI teórica Ma forzada a S1')
+assert(!hasBit(q3.avail, posOf('emi-teo-lu-s2')), 'EMI teórica Lu S2 fuera')
 
-// 8. Selección completa → exactamente 1 horario.
+// 7. EMI teórica Lu S2 (17:15) → HEA pierde el lunes y queda forzada a Ma+Ju;
+//    EMI teórica Ma S2 también muere (dejaría a HEA sin 2 días). Quedan 3840.
+const q4 = query(engine, selectionMask(engine, ['emi-teo-lu-s2']))
+assert(q4.count === 3840, `3840 tras EMI teórica Lu S2 (got ${q4.count})`)
+assert(!hasBit(q4.avail, posOf('hea-teo-lu')), 'HEA lunes fuera')
+assert(hasBit(q4.forced, posOf('hea-teo-ma')), 'HEA martes forzado')
+assert(hasBit(q4.forced, posOf('hea-teo-ju')), 'HEA jueves forzado')
+assert(!hasBit(q4.avail, posOf('emi-teo-ma-s2')), 'EMI teórica Ma S2 fuera (HEA quedaría sin días)')
+
+// 8. EMI práctica Mi S2 (17:15) ↔ TEA práctica Mi S1 (17:15) se excluyen.
+const q5 = query(engine, selectionMask(engine, ['emi-pra-mi-s2']))
+assert(!hasBit(q5.avail, posOf('tea-pra-mi-s1')), 'TEA práctica Mi 17:15 fuera con EMI práctica Mi S2')
+
+// 9. Selección completa → exactamente 1 horario.
 const full = [
   'emi-teo-lu-s1', 'emi-teo-ma-s1', 'emi-pra-mi-s1',
   'tea-teo-lu-s1', 'tea-teo-ju-s1', 'tea-pra-mi-s1',
@@ -81,12 +95,12 @@ const full = [
 const qf = query(engine, selectionMask(engine, full))
 assert(qf.count === 1, `selección completa → 1 horario (got ${qf.count})`)
 
-// 9. Sin OI: RIF(16) × bloque TEA/EMI(8) × HEA(3) = 384.
+// 10. Sin OI: RIF libre (2×2×4=16) × bloque EMI/TEA/HEA (104) = 1664.
 const e2 = buildEngine(COURSES, new Set([...allIds].filter((id) => id !== 'oi')))
-const q4 = query(e2, 0n)
-assert(q4.count === 384, `384 horarios sin OI (got ${q4.count})`)
+const q6 = query(e2, 0n)
+assert(q6.count === 1664, `1664 horarios sin OI (got ${q6.count})`)
 
-// 10. Ningún horario válido tiene superposiciones (chequeo por fuerza bruta).
+// 11. Ningún horario válido tiene superposiciones (fuerza bruta).
 let clashes = 0
 for (const s of matching(engine, 0n)) {
   const slots = engine.slots.filter((_, i) => hasBit(s, i))
@@ -99,7 +113,7 @@ for (const s of matching(engine, 0n)) {
 }
 assert(clashes === 0, 'ningún horario válido tiene superposiciones')
 
-// 11. Todo horario válido tiene exactamente 14 clases.
+// 12. Todo horario válido tiene exactamente 14 clases.
 let badSizes = 0
 for (const s of matching(engine, 0n)) {
   let bits = 0
