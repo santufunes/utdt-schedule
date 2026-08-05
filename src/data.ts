@@ -220,7 +220,7 @@ export const COURSES: Course[] = [
         pick: 1,
         slots: [
           { id: 'tea-pra-lu-s2', day: 1, start: t(13, 45), end: t(15, 20), room: 'A103', section: 2, kind: 'P' },
-          { id: 'tea-pra-mi-s2', day: 3, start: t(15, 30), end: t(17, 5), room: 'SV102', section: 2, kind: 'P' },
+          { id: 'tea-pra-mi-s2', day: 3, start: t(15, 30), end: t(17, 5), room: 'A101', section: 2, kind: 'P' },
           {
             id: 'tea-pra-mi-s1',
             day: 3,

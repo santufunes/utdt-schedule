@@ -70,11 +70,13 @@ Nota: la tarjeta de inscripción etiqueta como "Práctica 1" a los horarios que 
 | Teórica | Ju | 13:45–15:20 | SV201 | S1 |
 | Teórica | Ju | 15:30–17:05 | SV201 | S2 |
 | Práctica | Lu | 13:45–15:20 | A103 | S2 |
-| Práctica | Mi | 15:30–17:05 | SV102 | S2 |
+| Práctica | Mi | 15:30–17:05 | A101 | S2 ** |
 | Práctica | Mi | 17:15–18:50 | P102 | S1 * |
 | Práctica | Ju | 15:30–17:05 | A203 | S1 |
 
 \* Aula P102 según campus; la inscripción decía P201. Se usa P102.
+
+\** Cambio de aula avisado por Victoria Fernandez el 03/08/2026: era SV102, pasa a A101 por el resto del semestre (ya corregido en la página del curso).
 
 ### HEA 4155 — Historia Económica Argentina (della Paolera)
 
