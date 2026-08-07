@@ -3,11 +3,15 @@ import { COURSES, FOOTNOTES, SLOT_COURSE, COURSE_BY_ID, DAY_FULL, fmt } from './
 import type { Day, Slot } from './data'
 import { buildEngine, hasBit, matching, query, selectionMask, slotIdsFromMask } from './engine'
 import { downloadICS } from './ics'
+import { disconnect, ensureToken, hasValidToken, queueSync } from './gsync'
 import CourseCard from './components/CourseCard'
 import Calendar from './components/Calendar'
 import type { CalendarEntry } from './components/Calendar'
 
 const STORAGE_KEY = 'utdt-horarios-2026-2s'
+const GSYNC_KEY = 'utdt-horarios-gsync'
+
+type GStatus = 'off' | 'syncing' | 'synced' | 'reconnect' | 'error'
 
 interface Persisted {
   active: string[]
@@ -41,6 +45,14 @@ export default function App() {
   const [selected, setSelected] = useState(init.selected)
   const [copied, setCopied] = useState(false)
   const copiedTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const [gstatus, setGstatus] = useState<GStatus>(() => {
+    try {
+      return localStorage.getItem(GSYNC_KEY) ? 'reconnect' : 'off'
+    } catch {
+      return 'off'
+    }
+  })
+  const [gerror, setGerror] = useState<string | null>(null)
 
   useEffect(() => {
     const data: Persisted = { active: [...active], selected: [...selected] }
@@ -98,6 +110,74 @@ export default function App() {
     if (options.length === 0) return
     const pick = options[Math.floor(Math.random() * options.length)]
     setSelected(new Set(slotIdsFromMask(engine, pick)))
+  }
+
+  const runSync = async (interactive: boolean) => {
+    if (!interactive && !hasValidToken()) {
+      const ok = await ensureToken()
+      if (!ok) {
+        setGstatus('reconnect')
+        return
+      }
+    } else if (interactive) {
+      const ok = await ensureToken()
+      if (!ok) {
+        setGstatus((s) => (s === 'off' ? 'off' : 'reconnect'))
+        return
+      }
+    }
+    setGstatus('syncing')
+    try {
+      await queueSync(engine.slots.filter((s) => selected.has(s.id)))
+      setGstatus('synced')
+      setGerror(null)
+      try {
+        localStorage.setItem(GSYNC_KEY, '1')
+      } catch {
+        // sin almacenamiento: la conexión no persiste entre visitas
+      }
+    } catch (e) {
+      setGstatus('error')
+      setGerror(e instanceof Error ? e.message : String(e))
+    }
+  }
+
+  // Auto-sync (con debounce) ante cada edición mientras esté conectado.
+  useEffect(() => {
+    if (gstatus === 'off' || gstatus === 'reconnect') return
+    const t = setTimeout(() => {
+      void runSync(false)
+    }, 2000)
+    return () => clearTimeout(t)
+    // runSync se recrea por render; alcanza con reaccionar a la selección.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected, active])
+
+  const gsyncClick = () => {
+    if (gstatus === 'synced') {
+      void runSync(false) // sync manual
+    } else {
+      void runSync(true)
+    }
+  }
+
+  const gsyncOff = () => {
+    disconnect()
+    setGstatus('off')
+    setGerror(null)
+    try {
+      localStorage.removeItem(GSYNC_KEY)
+    } catch {
+      // nada
+    }
+  }
+
+  const gsyncLabel: Record<GStatus, string> = {
+    off: 'Conectar Google',
+    syncing: 'Sincronizando…',
+    synced: 'Google ✓',
+    reconnect: 'Reconectar Google',
+    error: 'Error de sync ↻',
   }
 
   const entries: CalendarEntry[] = []
@@ -170,6 +250,30 @@ export default function App() {
             </span>
           </div>
           <div className="actions">
+            <button
+              className={`gsync-btn ${gstatus}`}
+              onClick={gsyncClick}
+              disabled={gstatus === 'syncing'}
+              title={
+                gstatus === 'error'
+                  ? `Error al sincronizar: ${gerror ?? 'desconocido'} — tocá para reintentar`
+                  : gstatus === 'synced'
+                    ? 'Calendario "UTDT" al día · tocá para forzar un sync'
+                    : 'Sincronizar en vivo con tu Google Calendar (calendario "UTDT")'
+              }
+            >
+              {gsyncLabel[gstatus]}
+            </button>
+            {(gstatus === 'synced' || gstatus === 'error') && (
+              <button
+                className="icon-btn"
+                onClick={gsyncOff}
+                title="Desconectar Google"
+                aria-label="Desconectar Google"
+              >
+                ⏻
+              </button>
+            )}
             <button
               className="icon-btn"
               onClick={autocomplete}
