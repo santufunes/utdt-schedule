@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { COURSES, FOOTNOTES, SLOT_COURSE, COURSE_BY_ID, DAY_FULL, fmt } from './data'
 import type { Day, Slot } from './data'
 import { buildEngine, hasBit, matching, query, selectionMask, slotIdsFromMask } from './engine'
+import { downloadICS } from './ics'
 import CourseCard from './components/CourseCard'
 import Calendar from './components/Calendar'
 import type { CalendarEntry } from './components/Calendar'
@@ -202,9 +203,18 @@ export default function App() {
           {complete && (
             <div className="banner success">
               <span>¡Horario completo, sin superposiciones! ✓</span>
-              <button className="pill-btn" onClick={copySchedule}>
-                {copied ? 'Copiado ✓' : 'Copiar horario'}
-              </button>
+              <span className="banner-actions">
+                <button className="pill-btn" onClick={copySchedule}>
+                  {copied ? 'Copiado ✓' : 'Copiar horario'}
+                </button>
+                <button
+                  className="pill-btn"
+                  onClick={() => downloadICS(engine.slots.filter((s) => selected.has(s.id)))}
+                  title="Todo el semestre (03/08–27/11), sin feriados ni semanas de parciales, sin alertas"
+                >
+                  Descargar .ics
+                </button>
+              </span>
             </div>
           )}
           {COURSES.map((course) => (
