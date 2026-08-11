@@ -3,13 +3,21 @@ import { COURSES, FOOTNOTES, SLOT_COURSE, COURSE_BY_ID, DAY_FULL, fmt } from './
 import type { Day, Slot } from './data'
 import { buildEngine, hasBit, matching, query, selectionMask, slotIdsFromMask } from './engine'
 import { downloadICS } from './ics'
-import { disconnect, ensureToken, hasValidToken, queueSync } from './gsync'
+import {
+  decideSyncDirection,
+  disconnect,
+  ensureToken,
+  fetchCloudSelection,
+  hasValidToken,
+  queueSync,
+} from './gsync'
 import CourseCard from './components/CourseCard'
 import Calendar from './components/Calendar'
 import type { CalendarEntry } from './components/Calendar'
 
 const STORAGE_KEY = 'utdt-horarios-2026-2s'
 const GSYNC_KEY = 'utdt-horarios-gsync'
+const LAST_SYNCED_KEY = 'utdt-horarios-last-synced'
 
 type GStatus = 'off' | 'syncing' | 'synced' | 'reconnect' | 'error'
 
@@ -112,29 +120,82 @@ export default function App() {
     setSelected(new Set(slotIdsFromMask(engine, pick)))
   }
 
-  const runSync = async (interactive: boolean) => {
-    if (!interactive && !hasValidToken()) {
-      const ok = await ensureToken()
-      if (!ok) {
-        setGstatus('reconnect')
-        return
-      }
-    } else if (interactive) {
-      const ok = await ensureToken()
-      if (!ok) {
-        setGstatus((s) => (s === 'off' ? 'off' : 'reconnect'))
-        return
-      }
+  const markConnected = () => {
+    setGerror(null)
+    try {
+      localStorage.setItem(GSYNC_KEY, '1')
+    } catch {
+      // sin almacenamiento: la conexión no persiste entre visitas
+    }
+  }
+
+  const readLastSynced = (): string[] | null => {
+    try {
+      const raw = localStorage.getItem(LAST_SYNCED_KEY)
+      return raw ? (JSON.parse(raw) as string[]) : null
+    } catch {
+      return null
+    }
+  }
+
+  const writeLastSynced = (ids: Iterable<string>) => {
+    try {
+      localStorage.setItem(LAST_SYNCED_KEY, JSON.stringify([...ids].sort()))
+    } catch {
+      // nada
+    }
+  }
+
+  const pushNow = async (ids: Set<string>) => {
+    setGstatus('syncing')
+    try {
+      await queueSync(engine.slots.filter((s) => ids.has(s.id)))
+      writeLastSynced(ids)
+      setGstatus('synced')
+      markConnected()
+    } catch (e) {
+      setGstatus('error')
+      setGerror(e instanceof Error ? e.message : String(e))
+    }
+  }
+
+  // Reconcilia con el calendario (fuente de verdad entre dispositivos):
+  // un dispositivo nuevo adopta lo que hay en la nube; las ediciones
+  // locales pendientes se suben.
+  const adopting = useRef(false)
+  const pull = async () => {
+    const ok = hasValidToken() || (await ensureToken())
+    if (!ok) {
+      setGstatus((s) => {
+        if (s === 'off') {
+          setGerror('Google no pudo abrir su ventana (¿popup bloqueado?). Tocá de nuevo.')
+          return 'error'
+        }
+        return 'reconnect'
+      })
+      return
     }
     setGstatus('syncing')
     try {
-      await queueSync(engine.slots.filter((s) => selected.has(s.id)))
-      setGstatus('synced')
-      setGerror(null)
-      try {
-        localStorage.setItem(GSYNC_KEY, '1')
-      } catch {
-        // sin almacenamiento: la conexión no persiste entre visitas
+      const cloud = await fetchCloudSelection()
+      const dir = decideSyncDirection([...selected], readLastSynced(), cloud)
+      if (dir === 'adopt-cloud') {
+        adopting.current = true
+        setActive((prev) => {
+          const next = new Set(prev)
+          for (const id of cloud) next.add(SLOT_COURSE.get(id)!)
+          return next
+        })
+        setSelected(new Set(cloud))
+        writeLastSynced(cloud)
+        setGstatus('synced')
+        markConnected()
+      } else if (dir === 'push-local') {
+        await pushNow(selected)
+      } else {
+        writeLastSynced(selected)
+        setGstatus('synced')
+        markConnected()
       }
     } catch (e) {
       setGstatus('error')
@@ -142,23 +203,47 @@ export default function App() {
     }
   }
 
-  // Auto-sync (con debounce) ante cada edición mientras esté conectado.
+  // Al abrir: si este dispositivo ya estuvo conectado, intentar retomar
+  // en silencio (si el popup silencioso falla, queda "Reconectar").
+  useEffect(() => {
+    if (gstatus === 'reconnect') void pull()
+    // sólo al montar
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Al volver a la pestaña, refrescar desde el calendario.
+  useEffect(() => {
+    const onVisible = () => {
+      if (
+        document.visibilityState === 'visible' &&
+        hasValidToken() &&
+        (gstatus === 'synced' || gstatus === 'error')
+      ) {
+        void pull()
+      }
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gstatus, selected, active])
+
+  // Auto-push (con debounce) ante cada edición mientras esté conectado.
   useEffect(() => {
     if (gstatus === 'off' || gstatus === 'reconnect') return
+    if (adopting.current) {
+      adopting.current = false
+      return
+    }
     const t = setTimeout(() => {
-      void runSync(false)
+      void pushNow(selected)
     }, 2000)
     return () => clearTimeout(t)
-    // runSync se recrea por render; alcanza con reaccionar a la selección.
+    // pushNow se recrea por render; alcanza con reaccionar a la selección.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected, active])
 
   const gsyncClick = () => {
-    if (gstatus === 'synced') {
-      void runSync(false) // sync manual
-    } else {
-      void runSync(true)
-    }
+    void pull()
   }
 
   const gsyncOff = () => {
@@ -167,6 +252,7 @@ export default function App() {
     setGerror(null)
     try {
       localStorage.removeItem(GSYNC_KEY)
+      localStorage.removeItem(LAST_SYNCED_KEY)
     } catch {
       // nada
     }

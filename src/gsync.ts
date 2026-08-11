@@ -10,9 +10,11 @@
 // (p. ej. los creados a mano o por Claude) se adoptan en lugar de duplicarse.
 // Cualquier otro evento del calendario no se toca.
 
-import { COURSE_BY_ID, fmt } from './data'
+import { COURSES, COURSE_BY_ID, fmt } from './data'
 import type { Slot } from './data'
 import { TZ, excludedDatesFor, firstDateFor } from './semester'
+
+const ALL_SLOTS: Slot[] = COURSES.flatMap((c) => c.groups.flatMap((g) => g.slots))
 
 const CLIENT_ID =
   '1060916442866-8pf0vrq5cmcrpd2p5g4t2b8g3moc2ns4.apps.googleusercontent.com'
@@ -263,4 +265,68 @@ export function queueSync(slots: Slot[]): Promise<SyncResult> {
   const run = chain.then(() => syncSelection(slots))
   chain = run.catch(() => {})
   return run
+}
+
+/* ─── el calendario como fuente de verdad entre dispositivos ────────── */
+
+/** Lee la selección guardada en el calendario (ids de slots de los eventos). */
+export async function fetchCloudSelection(): Promise<string[]> {
+  const items: EventResource[] = []
+  let pageToken: string | undefined
+  do {
+    const q = new URLSearchParams({ maxResults: '250' })
+    if (pageToken) q.set('pageToken', pageToken)
+    const page = await api(`/events?${q}`)
+    items.push(...((page.items ?? []) as EventResource[]))
+    pageToken = page.nextPageToken
+  } while (pageToken)
+
+  const validIds = new Set(ALL_SLOTS.map((s) => s.id))
+  const found = new Set<string>()
+  for (const ev of items) {
+    if (ev.status === 'cancelled' || !Array.isArray(ev.recurrence)) continue
+    const sid = ev.extendedProperties?.private?.horariosSlotId
+    if (sid && validIds.has(sid)) {
+      found.add(sid)
+      continue
+    }
+    // Sin etiqueta (evento creado a mano o por Claude): matchear por
+    // título + día + hora contra los slots conocidos.
+    if (APP_SUMMARY.test(ev.summary ?? '')) {
+      const slot = ALL_SLOTS.find((s) => matchesSlot(ev, eventBody(s), s))
+      if (slot) found.add(slot.id)
+    }
+  }
+  return [...found].sort()
+}
+
+export type SyncDirection = 'in-sync' | 'adopt-cloud' | 'push-local'
+
+/**
+ * Decide qué lado gana al reconciliar la selección local con la del
+ * calendario. `lastSynced` es la última selección que este dispositivo
+ * sincronizó con éxito (null si nunca sincronizó).
+ *
+ * - Sin historia local: gana la nube si tiene algo (dispositivo nuevo);
+ *   si la nube está vacía, se suben las ediciones locales.
+ * - Local sin cambios desde el último sync → se adopta lo de la nube
+ *   (otro dispositivo editó).
+ * - Nube sin cambios desde el último sync → se suben los cambios locales.
+ * - Divergencia real (ambos cambiaron) → ganan las ediciones locales,
+ *   que son lo que el usuario tiene delante.
+ */
+export function decideSyncDirection(
+  local: string[],
+  lastSynced: string[] | null,
+  cloud: string[],
+): SyncDirection {
+  const key = (ids: string[]) => [...ids].sort().join(',')
+  const l = key(local)
+  const c = key(cloud)
+  if (l === c) return 'in-sync'
+  if (lastSynced === null) return cloud.length > 0 ? 'adopt-cloud' : 'push-local'
+  const s = key(lastSynced)
+  if (l === s) return 'adopt-cloud'
+  if (c === s) return 'push-local'
+  return 'push-local'
 }

@@ -274,4 +274,5 @@ export const FOOTNOTES: string[] = [
   'HEA: la cátedra anuncia cada semana a cuáles 2 de las 3 clases concurrir; el armador asume que fijás 2 días. Si podés, dejate libres los 3 bloques.',
   'El .ics exporta el semestre completo (03/08–27/11) sin feriados (17/8, 12/10, 23/11), sin días no laborables (11/9, 21/9) y sin las semanas de parciales (28/9–9/10). Los finales caen después del fin de clases. Eventos sin notificaciones.',
   '«Conectar Google» sincroniza en vivo tu selección con el calendario «UTDT» de tu cuenta (mismas fechas y exclusiones que el .ics, sin notificaciones, color uniforme del calendario). Sólo se tocan los eventos de clases; lo demás que agregues a ese calendario queda intacto. Las ediciones de una semana puntual hechas a mano en Google Calendar se conservan mientras no cambies esa clase acá.',
+  'El calendario «UTDT» es además la fuente de verdad entre dispositivos: al abrir la página (o volver a la pestaña) estando conectado, la selección se trae de ahí; tus ediciones pendientes siempre pisan a las viejas. Conectá Google una vez en cada dispositivo y vas a ver el mismo horario en todos.',
 ]
