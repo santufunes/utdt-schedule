@@ -77,7 +77,7 @@ const slots: Slot[] = COURSES.flatMap((c) => c.groups.flatMap((g) => g.slots)).f
   chosen.has(s.id),
 )
 assert(slots.length === 14, '14 slots seleccionados para el ICS')
-const ics = buildICS(slots)
+const ics = buildICS(slots, COURSES)
 assert((ics.match(/BEGIN:VEVENT/g) ?? []).length === 14, 'ICS con 14 VEVENT')
 assert(!ics.includes('VALARM'), 'ICS sin alarmas (sin notificaciones)')
 assert((ics.match(/RRULE:FREQ=WEEKLY;UNTIL=20261128T025959Z/g) ?? []).length === 14, 'RRULE con UNTIL correcto en los 14')

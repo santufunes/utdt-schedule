@@ -283,6 +283,13 @@ button:disabled {
   color: var(--danger);
 }
 
+.banner.info {
+  background: color-mix(in srgb, #3b82f6 10%, var(--card));
+  border: 1px solid color-mix(in srgb, #3b82f6 35%, transparent);
+  color: color-mix(in srgb, #3b82f6 70%, var(--text));
+  font-weight: 500;
+}
+
 .banner.success {
   background: color-mix(in srgb, var(--success) 12%, var(--card));
   border: 1px solid color-mix(in srgb, var(--success) 40%, transparent);
@@ -552,6 +559,169 @@ button:disabled {
   padding: 2px 7px;
 }
 
+/* ─── modo edición ──────────────────────────────────────────────────── */
+
+.icon-btn.toggled {
+  border-color: var(--focus);
+  color: var(--focus);
+  background: color-mix(in srgb, var(--focus) 12%, var(--card));
+}
+
+.card-editing {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--focus) 45%, var(--line));
+}
+
+.chip-wrap {
+  position: relative;
+  display: inline-flex;
+  flex: 1 1 138px;
+  max-width: 210px;
+}
+
+.chip-wrap .chip {
+  flex: 1 1 auto;
+  max-width: none;
+}
+
+.chip.editable:hover {
+  border-style: dashed;
+  border-color: var(--focus);
+}
+
+.chip-del {
+  position: absolute;
+  top: -7px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--danger);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+  z-index: 2;
+}
+
+.chip-del:disabled {
+  opacity: 0.35;
+}
+
+.chip.add-chip {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--focus) 55%, transparent);
+  color: var(--focus);
+  background: color-mix(in srgb, var(--focus) 6%, transparent);
+}
+
+.chip.add-chip .chip-where {
+  color: color-mix(in srgb, var(--focus) 70%, var(--muted));
+}
+
+.chip.removed-ghost {
+  opacity: 0.55;
+  border-style: dotted;
+}
+
+.chip.removed-ghost .chip-when {
+  text-decoration: line-through;
+}
+
+/* ─── modal editor ──────────────────────────────────────────────────── */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgb(0 0 0 / 0.45);
+  backdrop-filter: blur(3px);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.modal {
+  width: min(420px, 100%);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.35);
+  padding: 18px;
+}
+
+.modal h3 {
+  margin: 0 0 14px;
+  font-size: 15px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+  flex: 1;
+}
+
+.field span {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.field input,
+.field select {
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--chip-border);
+  border-radius: 9px;
+  padding: 8px 10px;
+  min-height: 40px;
+}
+
+.field input:focus-visible,
+.field select:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.field-row {
+  display: flex;
+  gap: 10px;
+}
+
+.modal-error {
+  color: var(--danger);
+  font-size: 12.5px;
+  font-weight: 600;
+  margin: 0 0 10px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.modal-actions .pill-btn {
+  background: var(--focus);
+  color: #fff;
+}
+
+.ghost-btn.restore {
+  margin-right: auto;
+  color: var(--focus);
+  border-color: color-mix(in srgb, var(--focus) 45%, transparent);
+}
+
 /* ─── switch ────────────────────────────────────────────────────────── */
 
 .switch {
@@ -807,7 +977,8 @@ button:disabled {
     display: inline;
   }
 
-  .chip {
+  .chip,
+  .chip-wrap {
     flex-basis: 128px;
     max-width: none;
   }

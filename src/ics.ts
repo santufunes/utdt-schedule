@@ -2,8 +2,8 @@
 // EXDATE para feriados/no laborables/parciales y sin VALARM (sin alertas).
 // Espeja la estructura de los eventos creados en Google Calendar.
 
-import { COURSE_BY_ID, fmt } from './data'
-import type { Slot } from './data'
+import { fmt } from './data'
+import type { Course, Slot } from './data'
 import { TZ, excludedDatesFor, firstDateFor } from './semester'
 
 const compact = (iso: string) => iso.replaceAll('-', '')
@@ -30,7 +30,8 @@ const fold = (line: string): string => {
   return parts.join('\r\n')
 }
 
-export function buildICS(slots: Slot[]): string {
+export function buildICS(slots: Slot[], courses: Course[]): string {
+  const byId = new Map(courses.map((c) => [c.id, c]))
   const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
   const lines: string[] = [
     'BEGIN:VCALENDAR',
@@ -51,7 +52,7 @@ export function buildICS(slots: Slot[]): string {
   ]
 
   for (const slot of slots) {
-    const course = COURSE_BY_ID.get(slot.courseId)!
+    const course = byId.get(slot.courseId)!
     const first = compact(firstDateFor(slot.day))
     const exdates = excludedDatesFor(slot.day)
     const kind = slot.kind === 'T' ? 'Teórica' : 'Práctica'
@@ -82,8 +83,8 @@ export function buildICS(slots: Slot[]): string {
   return lines.map(fold).join('\r\n') + '\r\n'
 }
 
-export function downloadICS(slots: Slot[]) {
-  const blob = new Blob([buildICS(slots)], { type: 'text/calendar;charset=utf-8' })
+export function downloadICS(slots: Slot[], courses: Course[]) {
+  const blob = new Blob([buildICS(slots, courses)], { type: 'text/calendar;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url

@@ -10,11 +10,14 @@
 // (p. ej. los creados a mano o por Claude) se adoptan en lugar de duplicarse.
 // Cualquier otro evento del calendario no se toca.
 
-import { COURSES, COURSE_BY_ID, fmt } from './data'
-import type { Slot } from './data'
+import { fmt } from './data'
+import type { Course, Slot } from './data'
 import { TZ, excludedDatesFor, firstDateFor } from './semester'
 
-const ALL_SLOTS: Slot[] = COURSES.flatMap((c) => c.groups.flatMap((g) => g.slots))
+const slotsOf = (courses: Course[]): Slot[] =>
+  courses.flatMap((c) => c.groups.flatMap((g) => g.slots))
+const courseById = (courses: Course[]): Map<string, Course> =>
+  new Map(courses.map((c) => [c.id, c]))
 
 const CLIENT_ID =
   '1060916442866-8pf0vrq5cmcrpd2p5g4t2b8g3moc2ns4.apps.googleusercontent.com'
@@ -121,8 +124,8 @@ async function api(path: string, init?: RequestInit): Promise<any> {
 const compact = (iso: string) => iso.replaceAll('-', '')
 const hhmmss = (min: number) => `${fmt(min).replace(':', '')}00`
 
-export function eventBody(slot: Slot) {
-  const course = COURSE_BY_ID.get(slot.courseId)!
+export function eventBody(slot: Slot, byId: Map<string, Course>) {
+  const course = byId.get(slot.courseId)!
   const first = firstDateFor(slot.day)
   const kind = slot.kind === 'T' ? 'Teórica' : 'Práctica'
   const exdates = excludedDatesFor(slot.day)
@@ -192,7 +195,8 @@ export interface SyncResult {
   deleted: number
 }
 
-async function syncSelection(slots: Slot[]): Promise<SyncResult> {
+async function syncSelection(slots: Slot[], courses: Course[]): Promise<SyncResult> {
+  const byId = courseById(courses)
   const items: EventResource[] = []
   let pageToken: string | undefined
   do {
@@ -226,7 +230,7 @@ async function syncSelection(slots: Slot[]): Promise<SyncResult> {
   const consumed = new Set<string>()
 
   for (const slot of slots) {
-    const body = eventBody(slot)
+    const body = eventBody(slot, byId)
     const existing = tagged.get(slot.id)
     if (existing) {
       if (needsUpdate(existing, body)) {
@@ -261,8 +265,8 @@ async function syncSelection(slots: Slot[]): Promise<SyncResult> {
 
 // Serializa las corridas para que dos ediciones rápidas no se pisen.
 let chain: Promise<unknown> = Promise.resolve()
-export function queueSync(slots: Slot[]): Promise<SyncResult> {
-  const run = chain.then(() => syncSelection(slots))
+export function queueSync(slots: Slot[], courses: Course[]): Promise<SyncResult> {
+  const run = chain.then(() => syncSelection(slots, courses))
   chain = run.catch(() => {})
   return run
 }
@@ -270,7 +274,9 @@ export function queueSync(slots: Slot[]): Promise<SyncResult> {
 /* ─── el calendario como fuente de verdad entre dispositivos ────────── */
 
 /** Lee la selección guardada en el calendario (ids de slots de los eventos). */
-export async function fetchCloudSelection(): Promise<string[]> {
+export async function fetchCloudSelection(courses: Course[]): Promise<string[]> {
+  const allSlots = slotsOf(courses)
+  const byId = courseById(courses)
   const items: EventResource[] = []
   let pageToken: string | undefined
   do {
@@ -281,7 +287,7 @@ export async function fetchCloudSelection(): Promise<string[]> {
     pageToken = page.nextPageToken
   } while (pageToken)
 
-  const validIds = new Set(ALL_SLOTS.map((s) => s.id))
+  const validIds = new Set(allSlots.map((s) => s.id))
   const found = new Set<string>()
   for (const ev of items) {
     if (ev.status === 'cancelled' || !Array.isArray(ev.recurrence)) continue
@@ -293,11 +299,70 @@ export async function fetchCloudSelection(): Promise<string[]> {
     // Sin etiqueta (evento creado a mano o por Claude): matchear por
     // título + día + hora contra los slots conocidos.
     if (APP_SUMMARY.test(ev.summary ?? '')) {
-      const slot = ALL_SLOTS.find((s) => matchesSlot(ev, eventBody(s), s))
+      const slot = allSlots.find((s) => matchesSlot(ev, eventBody(s, byId), s))
       if (slot) found.add(slot.id)
     }
   }
   return [...found].sort()
+}
+
+/* ─── overrides del dataset en la nube (evento de configuración) ────── */
+
+const CONFIG_TAG = 'horariosConfig'
+const CHUNK = 900
+const MAX_CHUNKS = 30
+
+async function findConfigEvent(): Promise<EventResource | null> {
+  const page = await api(
+    `/events?privateExtendedProperty=${encodeURIComponent(`${CONFIG_TAG}=1`)}&maxResults=10`,
+  )
+  const items = (page.items ?? []) as EventResource[]
+  return items.find((e) => e.status !== 'cancelled') ?? null
+}
+
+/** JSON de overrides guardado en el calendario, o null si no hay. */
+export async function fetchCloudOverridesJson(): Promise<string | null> {
+  const ev = await findConfigEvent()
+  if (!ev) return null
+  const props = ev.extendedProperties?.private ?? {}
+  const n = Math.min(parseInt(props.ovCount ?? '0', 10) || 0, MAX_CHUNKS)
+  if (n === 0) return null
+  let s = ''
+  for (let i = 0; i < n; i++) s += props[`ov${i}`] ?? ''
+  return s || null
+}
+
+export async function pushCloudOverridesJson(json: string): Promise<void> {
+  const nChunks = Math.max(1, Math.ceil(json.length / CHUNK))
+  if (nChunks > MAX_CHUNKS) throw new Error('Demasiadas ediciones para sincronizar (límite de 27 KB)')
+  const props: Record<string, string | null> = { [CONFIG_TAG]: '1', ovCount: String(nChunks) }
+  for (let i = 0; i < nChunks; i++) props[`ov${i}`] = json.slice(i * CHUNK, (i + 1) * CHUNK)
+
+  const ev = await findConfigEvent()
+  if (ev) {
+    // borrar chunks sobrantes de una versión anterior más larga
+    for (const key of Object.keys(ev.extendedProperties?.private ?? {})) {
+      if (/^ov\d+$/.test(key) && !(key in props)) props[key] = null
+    }
+    await api(`/events/${ev.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ extendedProperties: { private: props } }),
+    })
+    return
+  }
+  await api('/events', {
+    method: 'POST',
+    body: JSON.stringify({
+      summary: '⚙️ Config Horarios UTDT (no borrar)',
+      description:
+        'Evento técnico: guarda tus ediciones de horarios/aulas del armador para sincronizarlas entre dispositivos.',
+      start: { dateTime: '2026-01-01T00:00:00-03:00', timeZone: TZ },
+      end: { dateTime: '2026-01-01T00:15:00-03:00', timeZone: TZ },
+      transparency: 'transparent',
+      reminders: { useDefault: false, overrides: [] },
+      extendedProperties: { private: props },
+    }),
+  })
 }
 
 export type SyncDirection = 'in-sync' | 'adopt-cloud' | 'push-local'

@@ -49,7 +49,8 @@ export function occurrencesFor(day: Day): string[] {
 /** Primera fecha del semestre que cae en el día dado (sin filtrar exclusiones). */
 export function firstDateFor(day: Day): string {
   const cursor = new Date(`${SEMESTER_START}T00:00:00Z`)
-  while (cursor.getUTCDay() !== day) cursor.setUTCDate(cursor.getUTCDate() + 1)
+  for (let i = 0; i < 7 && cursor.getUTCDay() !== day; i++)
+    cursor.setUTCDate(cursor.getUTCDate() + 1)
   return toISO(cursor)
 }
 
